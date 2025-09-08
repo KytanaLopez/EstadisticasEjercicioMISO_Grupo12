@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métricas de Rendimiento</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .single-chart {
+            grid-column: 1 / -1;
+            height: 400px;
+        }
+        .stats-table {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #e9ecef;
+            font-weight: 600;
+            color: #495057;
+        }
+        .metric-value {
+            font-weight: 600;
+            color: #007bff;
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 20px auto;
+            display: block;
+            transition: transform 0.2s ease;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .chart-container {
+                height: 250px;
+            }
+            .single-chart {
+                height: 300px;
+            }
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Métricas de Rendimiento del Sistema</h1>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="successChart"></canvas>
+            </div>
+            <div class="chart-container single-chart">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </div>
+
+        <div class="stats-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Métrica</th>
+                        <th>Media/Promedio</th>
+                        <th>Desviación Estándar</th>
+                        <th>Muestras</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Latencia total</td>
+                        <td class="metric-value">1.077 s</td>
+                        <td>0.034 s</td>
+                        <td>101</td>
+                    </tr>
+                    <tr>
+                        <td>Tasa de éxito</td>
+                        <td class="metric-value">93.07%</td>
+                        <td>-</td>
+                        <td>101</td>
+                    </tr>
+                    <tr>
+                        <td>Tiempo total procesamiento</td>
+                        <td class="metric-value">1.077 s</td>
+                        <td>0.034 s</td>
+                        <td>101</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="download-btn" onclick="downloadChart()">
+            📥 Descargar Gráfica como PNG
+        </button>
+    </div>
+
+    <script>
+        // Configuración común para los gráficos
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.font.size = 12;
+
+        // Gráfico de Latencia
+        const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+        const latencyChart = new Chart(latencyCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Latencia Media', 'Desviación'],
+                datasets: [{
+                    data: [1.077, 0.034],
+                    backgroundColor: ['#667eea', '#764ba2'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Distribución de Latencia (segundos)',
+                        font: { size: 16, weight: 'bold' }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Tasa de Éxito
+        const successCtx = document.getElementById('successChart').getContext('2d');
+        const successChart = new Chart(successCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Éxito', 'Fallos'],
+                datasets: [{
+                    data: [93.07, 6.93],
+                    backgroundColor: ['#28a745', '#dc3545'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Tasa de Éxito (%)',
+                        font: { size: 16, weight: 'bold' }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Comparación
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        const comparisonChart = new Chart(comparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Latencia Total', 'Tiempo Procesamiento', 'Tasa de Éxito'],
+                datasets: [{
+                    label: 'Valores',
+                    data: [1.077, 1.077, 93.07],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(40, 167, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(102, 126, 234, 1)',
+                        'rgba(118, 75, 162, 1)',
+                        'rgba(40, 167, 69, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Comparación de Métricas',
+                        font: { size: 18, weight: 'bold' }
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Función para descargar como PNG
+        function downloadChart() {
+            // Crear un canvas temporal más grande para combinar todos los gráficos
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1200;
+            canvas.height = 800;
+            
+            // Fondo blanco
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Título principal
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 24px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('Métricas de Rendimiento del Sistema', canvas.width/2, 40);
+            
+            // Obtener imágenes de los gráficos
+            const latencyImg = latencyChart.toBase64Image();
+            const successImg = successChart.toBase64Image();
+            const comparisonImg = comparisonChart.toBase64Image();
+            
+            let loadedImages = 0;
+            const totalImages = 3;
+            
+            function checkAllLoaded() {
+                loadedImages++;
+                if (loadedImages === totalImages) {
+                    // Crear el enlace de descarga
+                    const link = document.createElement('a');
+                    link.download = 'metricas_rendimiento.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                }
+            }
+            
+            // Cargar y dibujar las imágenes
+            const img1 = new Image();
+            img1.onload = function() {
+                ctx.drawImage(img1, 50, 80, 350, 250);
+                checkAllLoaded();
+            };
+            img1.src = latencyImg;
+            
+            const img2 = new Image();
+            img2.onload = function() {
+                ctx.drawImage(img2, 450, 80, 350, 250);
+                checkAllLoaded();
+            };
+            img2.src = successImg;
+            
+            const img3 = new Image();
+            img3.onload = function() {
+                ctx.drawImage(img3, 200, 380, 800, 350);
+                checkAllLoaded();
+            };
+            img3.src = comparisonImg;
+        }
+    </script>
+</body>
+</html>
